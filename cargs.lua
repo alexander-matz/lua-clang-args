@@ -34,13 +34,13 @@ function App:new(name, description, metavar)
 
   new.options = {}
 
-  new:add_option(Option:new('flag', 'last', {'-', '--'}, 'h', 'help', 'Show this help'))
-  new:add_option(Option:new('flag', 'last', {'-', '--'}, 'help', nil, 'Show this help'))
+  new:add_option('flag', 'last', {'-', '--'}, 'help', nil, 'Show this help')
 
   return new
 end
 
-function App:add_option(option)
+function App:add_option(parser, merger, prefixes, pattern, name, help, metavar)
+  local option = Option:new(parser, merger, prefixes, pattern, name, help, metavar)
   self.options[#self.options + 1] = option
 end
 
@@ -48,7 +48,6 @@ function App:parse(args)
   local options = {}
   local arguments = {}
 
-  --local default_cmdline = rawget(_G, "arg") or {}
   args = args or rawget(_G, "arg") or {}
   local err, idx = nil, 1
   while idx <= #args do
@@ -72,6 +71,10 @@ function App:parse(args)
       end
     end
     if not is_option then
+      if args[idx]:sub(1, 1) == '-' then
+        print('unknown option: ' .. args[idx])
+        os.exit(1)
+      end
       arguments[#arguments+1] = args[idx]
       idx = idx + 1
     end
@@ -80,19 +83,23 @@ function App:parse(args)
     arguments[#arguments+1] = args[idx]
     idx = idx + 1
   end
+  if options['help'] then
+    self:help()
+    os.exit(0)
+  end
   return options, arguments
 end
 
 function App:help()
   local printf = function(fmt, ...) print(string.format(fmt, ...)) end
-  local rpad = function(str, n) return string.rep(' ', n - #str) .. str end
+  local rpad = function(str, n) return str .. string.rep(' ', n - #str+1) end
   printf("%s", self.description)
   printf("")
   printf("usage: %s [options] %s", self.name, self.metavar)
   printf("")
   printf("options:")
   local max_length = 0
-  for _, option in ipairs(self._option_config) do
+  for _, option in ipairs(self.options) do
     local text = option.pattern
     if option.parser ~= 'flag' then
       text = text .. ' ' .. option.metavar
@@ -101,7 +108,7 @@ function App:help()
       max_length = #text
     end
   end
-  for _, option in ipairs(self._option_config) do
+  for _, option in ipairs(self.options) do
     if option.parser == 'flag' then
       local pattern = option.prefixes[1] .. option.pattern
       printf("  %s  %s", rpad(pattern, max_length), option.help)
@@ -294,6 +301,7 @@ M.parsers = {
   ['flag'] = M.parse_flag,
   ['joined'] = M.parse_joined,
   ['separate'] = M.parse_separate,
+  ['joinsep'] = M.parse_joined_or_separate,
   ['joined_or_separate'] = M.parse_joined_or_separate,
 }
 
