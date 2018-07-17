@@ -1,14 +1,9 @@
 # cargs
 
-A library that implements argument parsing suitable for writing clang/gcc
-compatible wrappers in lua.
-I was unable to find an existing library due to the mess that is the clang/gcc
-interface.
-Some options start with '-', some start with '--'. Some options have the value
-directly follow the name in the same argument (-O<1/2/3>,  -std=<standard>),
-others have an optional space (-I <dir>, -I<dir>).
-This library is inspired by the way clang parses arguments, but implementes a
-greatly simplified version.
+A library that implements argument parsing suitable for writing clang/gcc compatible wrappers in lua.
+I was unable to find an existing library for this due to the messy gcc interface.
+Some options start with `-` (`-c`), some start with `--` (`--cuda-path=`), some can start with both (`-include`, `--include`). Some options have the value directly follow the name in the same argument (`-O<1/2/3>`,  `-std=<standard>`), others have an optional space (`-I <dir>`, `-I<dir>`).
+This library is very loosely inspired by the way clang parses arguments, but implementes a greatly simplified version of that approach.
 
 ## Example
 
